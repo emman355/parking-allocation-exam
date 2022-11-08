@@ -1,127 +1,23 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import ParkingSlot from '../components/ParkingSlot';
 import './ParkingLot.css';
 import {
-  PARKING_LOT_SIZES,
   FIXED_CHARGE,
   FULL_DAY_CHARGE,
   L_HOURLY_CHARGE,
   M_HOURLY_CHARGE,
   S_HOURLY_CHARGE,
 } from '../utils/constants';
-import { GlobalContext } from '../context/GlobalState';
+import { FormContext } from '../context/Form-context';
+import { ParkingLotContext } from '../context/ParkingLotContext';
 import { getVehicleValue } from '../utils/common';
 import { useNavigate } from 'react-router-dom';
-
-var PARKING_SLOT = [];
-let MAX_COLS = 5;
-let MAX_ROWS = 5;
-const ENTRANCE = [
-  { name: 'A', row: 0, col: 2 },
-  { name: 'B', row: 2, col: 0 },
-  { name: 'C', row: 4, col: 2 },
-];
-PARKING_SLOT = new Array(MAX_ROWS)
-  .fill(null)
-  .map(() => new Array(MAX_COLS).fill(null));
-
-const getRandomLotSize = () => {
-  const min = 0;
-  const max = 2;
-  const lot_sizes = PARKING_LOT_SIZES;
-  const size = Math.round(Math.random() * (max - min));
-  const desc = lot_sizes[size];
-  return {
-    value: size,
-    desc: desc,
-  };
-};
-
-const isPathway = (row, col) => {
-  if (col === 0 || row === 0 || row === MAX_ROWS - 1 || col === MAX_COLS - 1) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-//check if the row/column is an entrance
-const isEntrance = (row, col) => {
-  if (
-    (ENTRANCE[0].row === row && ENTRANCE[0].col === col) ||
-    (ENTRANCE[1].row === row && ENTRANCE[1].col === col) ||
-    (ENTRANCE[2].row === row && ENTRANCE[2].col === col)
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-const park = (parkingSlots, carSize, ent) => {
-  let entrance = ENTRANCE.find(o => o.name === ent.toUpperCase());
-  let size = getVehicleValue(carSize);
-
-  //Value checking
-  let newRow = -1,
-    newCol = -1;
-
-  let distance = 9999;
-
-  // Search for the  parking space
-  for (let row = 0; row < MAX_ROWS; row++) {
-    for (let col = 0; col < MAX_COLS; col++) {
-      if (!isPathway(row, col)) {
-        let slot = parkingSlots[row][col];
-        // Check if vehicle fits in parking slot
-        if (size <= slot.slotSize.value && !slot.isOccupied) {
-          let computedDistance =
-            Math.abs(entrance.row - slot.row) +
-            Math.abs(entrance.col - slot.col);
-          if (distance > computedDistance) {
-            distance = computedDistance;
-            newRow = row;
-            newCol = col;
-          }
-        }
-      }
-    }
-  }
-
-  //Check if there is an available slot
-  if (newRow === -1) {
-    return false;
-  } else {
-    Object.assign(parkingSlots[newRow][newCol], {
-      isOccupied: true,
-      vehicleSize: {
-        value: parseInt(size),
-        desc: carSize,
-      },
-      slotSize: parkingSlots[newRow][newCol].slotSize,
-      row: newRow,
-      col: newCol,
-    });
-    return parkingSlots[newRow][newCol];
-  }
-};
-
-const unpark = (parkingSlots, row, col) => {
-  let parking_slot = parkingSlots[row][col];
-
-  Object.assign(parkingSlots[row][col], {
-    isOccupied: false,
-    vehicleSize: null,
-    slotSize: parking_slot.slotSize,
-    row,
-    col,
-  });
-
-  return parkingSlots[row][col];
-};
+import { useEffect } from 'react';
 
 const ParkingLot = () => {
-  const { carDetails } = useContext(GlobalContext);
+  const { carDetails } = useContext(FormContext);
+  const { parkingArea, park, unpark } = useContext(ParkingLotContext);
+
   const [parkingSlot, setParkingSlot] = useState([]);
   const [currentSlot, setCurrentSlot] = useState({});
   const [hasParked, setHasParked] = useState(false);
@@ -131,27 +27,9 @@ const ParkingLot = () => {
 
   const navigate = useNavigate();
 
-  const initializeParkingSpaces = () => {
-    for (let row = 0; row < MAX_ROWS; row++) {
-      for (let col = 0; col < MAX_COLS; col++) {
-        if (!isPathway(row, col)) {
-          PARKING_SLOT[row][col] = {
-            isOccupied: false,
-            slotSize: getRandomLotSize(),
-            row,
-            col,
-          };
-        } else if (isEntrance(row, col)) {
-          //set the entrance slots
-          PARKING_SLOT[row][col] = {
-            isEntrance: true,
-            entrance: ENTRANCE.find(o => o.row === row && o.col === col).name,
-          };
-        }
-      }
-    }
-    setParkingSlot(PARKING_SLOT);
-  };
+  useEffect(() => {
+    setParkingSlot(parkingArea);
+  }, [parkingArea]);
 
   const handlePark = () => {
     let updatedParkSlot = park(
@@ -246,9 +124,6 @@ const ParkingLot = () => {
   const handleRedirect = () => {
     navigate('/');
   };
-  useEffect(() => {
-    initializeParkingSpaces();
-  }, []);
   return (
     <div className="parking-lot-container">
       <div className="car-details">

@@ -1,13 +1,5 @@
-const AppReducer = (state, action) => {
+const FormReducer = (state, action) => {
   switch (action.type) {
-    case 'RESET':
-      return {
-        ...state,
-        carSize: '',
-        noOfHours: '',
-        entrance: '',
-        slot: null,
-      };
     case 'REGISTER':
       return {
         ...state,
@@ -20,4 +12,4 @@ const AppReducer = (state, action) => {
   }
 };
 
-export default AppReducer;
+export default FormReducer;

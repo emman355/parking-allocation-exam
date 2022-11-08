@@ -2,10 +2,10 @@ import React, { useState, useContext } from 'react';
 import './ParkingForm.css';
 import { CAR_SIZES, MALL_ENTRANCE } from '../utils/constants';
 import { useNavigate } from 'react-router-dom';
-import { GlobalContext } from '../context/GlobalState';
+import { FormContext } from '../context/Form-context';
 
 const ParkingForm = () => {
-  const { register } = useContext(GlobalContext);
+  const { register } = useContext(FormContext);
   const [carRegister, setCarRegister] = useState({
     carSize: '',
     noOfHours: '',
@@ -26,6 +26,12 @@ const ParkingForm = () => {
   const onSubmitHandler = e => {
     e.preventDefault();
     register(carRegister);
+    setCarRegister(prevState => ({
+      ...prevState,
+      carSize: '',
+      noOfHours: '',
+      entrance: '',
+    }));
     navigate('/parking_lot');
   };
 
